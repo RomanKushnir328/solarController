@@ -161,7 +161,7 @@ static void newMsg(FB_msg &msg)
         }
         else if (msg.text == "/getLocalIP")
         {
-          botMsg += WiFi.localIP().toString();
+          botMsg += WiFi.localIP().toString() + ", connection quality =>" + WiFi.RSSI();
         }
         else if (msg.text == "/setWiFi")
         {
