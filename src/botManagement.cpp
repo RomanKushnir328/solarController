@@ -1,17 +1,19 @@
 #include "botManagement.h"
 #include "eepromManagement.h"
 #include "hardwareManagement.h"
+#include "internetManagement.h"
 
 extern Voltages voltagesNow;
 extern Weather weatherNow;
 extern bool presetSaveMode;
 extern bool isСonnectedADS;
 extern bool isСonnectedSensors;
+extern Weather weatherMax;
+extern Weather weatherMin;
 
 FastBot bot(BOT_TOKEN);
 FB_Time timeNow;
 static uint64_t timeLastMsg;
-int16_t timeZone = UTC_ZONE;
 
 bool maxPWM = false;
 bool minPWM = false;
@@ -23,17 +25,14 @@ static bool mainBotFunctions(const String userMsg, const String userID);
 
 void botConnection(void)
 {
-  timeNow = bot.getTime(timeZone);
   bot.attach(newMsg);
   bot.sendMessage("Bot started, local IP => " + WiFi.localIP().toString() + ", connection strenght => " + String(WiFi.RSSI()), ADMIN_CHAT_ID);
   bot.skipUpdates();
 
-#ifndef DEBUG_WEATHER_SENSORS
   if (!isСonnectedSensors)
   {
     bot.sendMessage("Can`t connect sensors", ADMIN_CHAT_ID);
   }
-#endif
 
 #ifndef DEBUG_ADS
   if (!isСonnectedADS)
@@ -46,6 +45,7 @@ void botConnection(void)
 void botManage(void)
 {
   bot.tick();
+  timeNow = bot.getTime(getTimeZone());
   if (millis() - timeLastMsg < 10000)
   {
     bot.setPeriod(1000);
@@ -64,13 +64,35 @@ void botManage(void)
   }
 }
 
+static String getMenuControl(void)
+{
+  String result = String(menuControl);
+
+  if (!digitalRead(OUT_SWITCH_PIN))
+  {
+    result += "\n /outOff";
+  }
+  else
+  {
+    result += "\n /outOn";
+  }
+
+  if (presetSaveMode)
+  {
+    result += "\t /saveModeOff";
+  }
+  else
+  {
+    result += "\t /saveModeOn";
+  }
+  return result;
+}
+
 static void newMsg(FB_msg &msg)
 {
   static bool isUpdateTimeZone = false;
 
   digitalWrite(LED_BUILTIN, LOW);
-
-  timeLastMsg = millis();
 
   String botMsg;
 
@@ -89,17 +111,9 @@ static void newMsg(FB_msg &msg)
     {
       if (msg.userID == ADMIN_CHAT_ID)
       {
-        if (msg.text == "/menuLastTimeWeather")
+        if (msg.text == "/menuControl")
         {
-          bot.showMenu(menuLastTimeWeatherForAdmin, msg.userID);
-        }
-        else if (msg.text == "/menuControlHardware")
-        {
-          bot.showMenu(menuControlHardware, msg.userID);
-        }
-        else if (msg.text == "/menuControlWiFi")
-        {
-          bot.showMenu(menuControlWiFi, msg.userID);
+          bot.showMenu(getMenuControl(), msg.userID);
         }
         else if (msg.text == "/restart")
         {
@@ -117,21 +131,25 @@ static void newMsg(FB_msg &msg)
         {
           digitalWrite(OUT_SWITCH_PIN, LOW);
           botMsg += "output is disabled";
+          bot.showMenu(getMenuControl(), msg.userID);
         }
         else if (msg.text == "/outOff")
         {
           digitalWrite(OUT_SWITCH_PIN, HIGH);
           botMsg += "output is enabled";
+          bot.showMenu(getMenuControl(), msg.userID);
         }
         else if (msg.text == "/saveModeOff")
         {
           presetSaveMode = false;
           botMsg += "Save mode is turned off";
+          bot.showMenu(getMenuControl(), msg.userID);
         }
         else if (msg.text == "/saveModeOn")
         {
           presetSaveMode = true;
           botMsg += "Save mode is turned on";
+          bot.showMenu(getMenuControl(), msg.userID);
         }
         else if (msg.text == "/maxPWM")
         {
@@ -163,14 +181,6 @@ static void newMsg(FB_msg &msg)
         {
           botMsg += WiFi.localIP().toString() + ", connection quality =>" + WiFi.RSSI();
         }
-        else if (msg.text == "/setWiFi")
-        {
-          botMsg += "unfinished";
-        }
-        else if (msg.text == "/setAP")
-        {
-          botMsg += "unfinished";
-        }
         else if (msg.text == "/setTimeZone")
         {
           isUpdateTimeZone = true;
@@ -187,11 +197,7 @@ static void newMsg(FB_msg &msg)
       }
       else
       {
-        if (msg.text == "/menuLastTimeWeather")
-        {
-          botMsg += "menuLastTimeWeather";
-        }
-        else if (msg.OTA)
+        if (msg.OTA)
         {
           botMsg += "You do not have access to this feature";
         }
@@ -205,82 +211,71 @@ static void newMsg(FB_msg &msg)
   }
   else
   {
-    timeZone = msg.data.toInt();
+    int16_t timeZone;
+    msg.text.trim();
+    timeZone = msg.text.toInt();
     if (timeZone > 720 || timeZone < -720)
     {
       botMsg += "Send your time zone in minutes!. From -720 to 720";
     }
     else
     {
-      botMsg += "Time zone set to " + String(timeZone) + "minutes plus UTC";
+      setTimeZone(timeZone);
+      botMsg += "Time zone set to " + String(timeZone) + " minutes plus UTC";
       isUpdateTimeZone = false;
     }
   }
   bot.sendMessage(botMsg, msg.userID);
+  timeLastMsg = millis();
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
 static bool mainBotFunctions(const String userMsg, const String userID)
 {
-  bool isResult = true;
-  String botMsg = "";
   if (userMsg == "/getWeather")
   {
-    botMsg += "Sun power => " + String(weatherNow.sunPower) + ", temperature => " + String(weatherNow.temperature) + ", humidity => " + String(weatherNow.humidity) + ", pressure => " + String(weatherNow.pressure);
+      bot.sendMessage(weatherNow.toString(), userID);
   }
-  else if (userMsg == "/getSunPower")
+  else if (userMsg == "/mainMenu" || userMsg == "/start")
   {
-    botMsg += "Sun power => " + String(weatherNow.sunPower);
-  }
-  else if (userMsg == "/getTemperature")
-  {
-    botMsg += "Temperature => " + String(weatherNow.temperature);
-  }
-  else if (userMsg == "/getHumidity")
-  {
-    botMsg += "Humidity => " + String(weatherNow.humidity);
-  }
-  else if (userMsg == "/getPressure")
-  {
-    botMsg += "Pressure => " + String(weatherNow.pressure);
-  }
-  else if (userMsg == "/menuWeatherNow" || userMsg == "/start")
-  {
-    bot.showMenu(menuWeatherNow, userID);
+    if (userID == ADMIN_CHAT_ID)
+    {
+      bot.showMenu(mainMenuForAdmin, userID);
+    }
+    else
+    {
+      bot.showMenu(mainMenu, userID);
+    }
   }
   else if (userMsg == "/getWeatherLastDay")
   {
-    botMsg += getDayData();
+    bot.sendMessage("Date solPower temp pressure humidity\n" + getLastTimeData(LAST_DAY).toString(), userID);
   }
   else if (userMsg == "/getWeatherLastWeek")
   {
-    botMsg += getWeekData();
+    bot.sendMessage("Date solPower temp pressure humidity\n" + getLastTimeData(LAST_WEEK).toString(), userID);
   }
   else if (userMsg == "/getWeatherLastMonth")
   {
-    botMsg += getMonthData();
+    bot.sendMessage("Date solPower temp pressure humidity\n" + getLastTimeData(LAST_MONTH).toString(), userID);
   }
   else if (userMsg == "/getWeatherLastYear")
   {
-    botMsg += getYearData();
+    bot.sendMessage("Date solPower temp pressure humidity\n" + getLastTimeData(LAST_YEAR).toString(), userID);
   }
   else if (userMsg == "/getAverangeWeather")
   {
-    botMsg += getAverangeWeather();
+    bot.sendMessage(getAverangeWeather().toString(), userID);
   }
   else if (userMsg == "/getMaximumIndexes")
   {
-    botMsg += getMaxIndexes();
+    bot.sendMessage("Max indexes:\n" + weatherMax.toString(), userID);
+    bot.sendMessage("Min indexes:\n" + weatherMin.toString(), userID);
   }
   else
   {
-    isResult = false;
+    return false;
   }
 
-  if (botMsg.length() > 0)
-  {
-    bot.sendMessage(botMsg, userID);
-  }
-
-  return isResult;
+  return true;
 }

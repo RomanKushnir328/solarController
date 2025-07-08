@@ -1,25 +1,29 @@
 #pragma once
 
-#define EVERY_MS(x)                  \
-  static uint32_t tmr;               \
-  bool flag = millis() - tmr >= (x); \
-  if (flag)                          \
-    tmr += (x);                      \
-  if (flag)
+#define LCD
+
+//#define DEBUG_EEPROM // send a msg if eeprom commit
+
+#define EEPROM_CLEANING // erase all data from eeprom on load
 
 #define PWM_PIN D7
 #define OUT_SWITCH_PIN D1
 #define LED_WORK_PIN D3
 #define SDA D5
 #define SCL D6
+#ifdef LCD
+#define CH_MENU_BUT D0
+#endif
 
-#define PWM_RESOLUTION 12
+#define PWM_RESOLUTION 10
+#define MAX_PWM (1 << (PWM_RESOLUTION)) - 1
 #define DIVIDER_SOL_BAT 21.2151
-#define DIVIDER_SYS_BAT 10.937
+#define DIVIDER_SYS_BAT 10.936
 #define SOL_BAT_SHUNT_RESISTANCE 0.0145
 #define HYSTERESIS 0.15
 #define MIN_BAT_VOL 10.5
 #define MIN_VOL_TO_CONNECT_BAT 11.5
+#define MAX_SOL_POW 50.0
 #define SAVEMODE_STARTS 0
 #define SAVEMODE_ENDS 6
 
@@ -42,13 +46,4 @@
 
 #define BOT_TOKEN "your bot token"
 #define ADMIN_CHAT_ID "your chat"
-#define UTC_ZONE 2
-
-#define LCD
-//#define DEBUG_WEATHER_SENSORS
-//#define DEBUG_ADC
-//#define DEBUG_EEPROM
-
-#ifndef DEBUG_EEPROM
-//    #define EEPROM_CLEANING
-#endif
+#define UTC_ZONE yourTimezone

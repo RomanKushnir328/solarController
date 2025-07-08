@@ -6,14 +6,12 @@
 #include "hardwareManagement.h"
 
 //- telegram bot menu:
-//                user
-const char menuWeatherNow[] = "/getWeather \t /getSunPower \t /getTemperature \n /getHumidity \t /getPressure \t /menuLastTimeWeather";
-const char menuLastTimeWeather[] = "/menuWeatherNow \t /getWeatherLastDay \n /getWeatherLastWeek \t /getWeatherLastMonth \n /getWeatherLastYear \t /getAverangeWeather \n /getMaximumIndexes";
+//             user
+const char mainMenu[] = "/getWeather \t/getWeatherLastDay \n/getWeatherLastWeek \t/getWeatherLastMonth \n/getWeatherLastYear \t/getAverangeWeather \n/getMaximumIndexes";
 
-//                admin
-const char menuLastTimeWeatherForAdmin[] = "/menuWeatherNow \t /getWeatherLastDay \n /getWeatherLastWeek \t /getWeatherLastMonth \n /getWeatherLastYear \t /getAverangeWeather \n /getMaximumIndexes \t /menuControlHardware";
-const char menuControlHardware[] = "/menuLastTimeWeather \t /getVoltages \n /outOff \t /outOn \n /resetMemory \t /restart \n /saveModeOff \t /saveModeOn \n /maxPWM \t /minPWM \n /menuControlWiFi";
-const char menuControlWiFi[] = "/menuControlHardware \t /getLocalIP \t /setWifi \n /setAP \t /setTimeZone";
+//             admin
+const char mainMenuForAdmin[] = "/getWeather \t/getWeatherLastDay \n/getWeatherLastWeek \t/getWeatherLastMonth \n/getWeatherLastYear \t/getAverangeWeather \n/getMaximumIndexes \t/menuControl";
+const char menuControl[] = "/mainMenu \t /getVoltages \n /resetMemory \t /restart \n /maxPWM \t /minPWM \n /setTimeZone \t /getLocalIP";
 
 void botConnection(void);
 void botManage(void);

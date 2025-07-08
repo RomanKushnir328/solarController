@@ -4,7 +4,9 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <FastBot.h>
+#include <ArduinoJson.h>
 #include "dataTypes.h"
 
 void WiFiConnection(void);
 void managementWiFi(void);
+String sendHTML(void);

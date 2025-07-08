@@ -26,8 +26,19 @@ void loop(void)
   botManage();
   eepromManage();
   digitalWrite(LED_WORK_PIN, HIGH);
-  readWeather();
+  static Timer weatherTimer = Timer(0, 0);
+  if (weatherTimer.everyMilli(1000))
+  {
+    readWeather();
+    batControl();
+  }
   maxPointPowerTracking();
-  batControl();
+#ifdef LCD
+  static Timer displayTimer = Timer(0, 0);
+  if (displayTimer.everyMilli(100))
+  {
+    controlDisplay();
+  }
+#endif
   digitalWrite(LED_WORK_PIN, LOW);
 }

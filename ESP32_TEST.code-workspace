@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../VS code folder/VS code projects/PlatformiO/ESP32_TEST"
+		},
+		{
+			"name": "solarController",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

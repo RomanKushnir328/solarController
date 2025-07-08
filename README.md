@@ -6,6 +6,6 @@ The project runs on WeMos D1 Mini, ADS1115, BME280 and AHT10 sensors. You can ch
 -works with lcd1602 display
 -MPPT controller for low-power solar panels 
 
-The project runs on your own telegram bot, which you have to create yourself with (BotFather)[https://t.me/BotFather]. Then write your bot id to configuration file. My bot username @tm1637bot.
+The project runs on your own telegram bot, which you have to create yourself with [BotFather](https://t.me/BotFather). Then write your bot id to configuration file. My bot username @tm1637bot.
 
-This project is my first serious project, so it can contain many mistakes. You can connect with (me on tg)[https://t.me/kusnirochok]. You also can join the development if you want.
+This project is my first serious project, so it can contain many mistakes. You can connect with [me on tg](https://t.me/kusnirochok). You also can join the development if you want.
