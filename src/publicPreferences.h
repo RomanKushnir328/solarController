@@ -46,4 +46,4 @@
 
 #define BOT_TOKEN "your bot token"
 #define ADMIN_CHAT_ID "your chat"
-#define UTC_ZONE yourTimezone
+#define UTC_ZONE 0

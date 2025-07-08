@@ -326,7 +326,7 @@ LastTimeWeather getLastTimeData(LastTimePeriod type)
     break;
   }
 
-  return LastTimeWeather(data, type, timeNow);
+  return LastTimeWeather(data, type, timeNow, UTC_ZONE);
 }
 
 Weather getAverangeWeather(void)

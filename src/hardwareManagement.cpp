@@ -100,6 +100,7 @@ void sensorsConnection(void)
 #ifdef LCD
   lcd.init();
   lcd.noBacklight();
+  lcd.autoscroll();
 #endif
 
   isСonnectedSensors = aht20.begin();
