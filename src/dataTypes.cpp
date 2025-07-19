@@ -107,27 +107,6 @@ String WifiValues::toString(void)
          String("AP password => ") + apPassword;
 }
 
-uint32_t LastTimeWeather::getUnix(FB_Time time, int16_t timeZone)
-{
-  uint32_t result = 0;
-
-  for (uint16_t year = 1970; year < time.year; year++)
-  {
-    result += IS_LEAP_YEAR(year) ? 1000 * 60 * 24 * 366 : 1000 * 60 * 24 * 365;
-  }
-  for (byte month = 0; month < time.month; month++)
-  {
-    result += getMonthLength(time.year, month) * 24 * 60 * 60 * 1000;
-  }
-  result += time.day * 24 * 60 * 60 * 1000;
-  result += time.hour * 60 * 60 * 1000;
-  result += time.minute * 60 * 1000;
-  result += time.second * 1000;
-  result -= timeZone*60*60*1000;
-
-  return result;
-}
-
 LastTimeWeather::LastTimeWeather(std::vector<Weather> &data, LastTimePeriod period, FB_Time time, int16_t timeZone)
 {
   for (uint16_t i = 0; i < data.size(); i++)
@@ -139,16 +118,16 @@ LastTimeWeather::LastTimeWeather(std::vector<Weather> &data, LastTimePeriod peri
       switch (period)
       {
       case LAST_DAY:
-        labels.push_back(FB_Time(getUnix(time, timeZone)-(24 - period * i)*60*60*1000, timeZone));
+        labels.push_back(FB_Time(time.getUnix(timeZone)-(24 - period * i)*60*60, timeZone));
         break;
       case LAST_WEEK:
-        labels.push_back(FB_Time(getUnix(time, timeZone)-(168 - period * i)*60*60*1000, timeZone));
+        labels.push_back(FB_Time(time.getUnix(timeZone)-(168 - period * i)*60*60, timeZone));
         break;
       case LAST_MONTH:
-        labels.push_back(FB_Time(getUnix(time, timeZone)-(720 - period * i)*60*60*1000, timeZone));
+        labels.push_back(FB_Time(time.getUnix(timeZone)-(720 - period * i)*60*60, timeZone));
         break;
       case LAST_YEAR:
-        labels.push_back(FB_Time(getUnix(time, timeZone)-(8760 - period * i)*60*60*1000, timeZone));
+        labels.push_back(FB_Time(time.getUnix(timeZone)-(8760 - period * i)*60*60, timeZone));
         break;
       }
     }
@@ -176,23 +155,23 @@ String LastTimeWeather::toString(void)
   return result;
 }
 
-String LastTimeWeather::dataToString(byte param)
+String LastTimeWeather::dataToString(GraphType type)
 {
   String result;
   for (Weather temp : data)
   {
-    switch (param)
+    switch (type)
     {
-    case 0:
+    case SOLAR_POWER:
       result += String(temp.sunPower);
       break;
-    case 1:
+    case TEMPERATURE:
       result += String(temp.temperature);
       break;
-    case 2:
+    case PRESSURE:
       result += String(temp.pressure);
       break;
-    case 3:
+    case HUMIDITY:
       result += String(temp.humidity);
       break;
     }

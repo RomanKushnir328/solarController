@@ -2,7 +2,7 @@
 
 #define LCD
 
-#define DEBUG_EEPROM // send a msg if eeprom commit
+//#define DEBUG_EEPROM // send a msg if eeprom commit
 
 //#define EEPROM_CLEANING // erase all data from eeprom on load
 
@@ -17,8 +17,8 @@
 
 #define PWM_RESOLUTION 10
 #define MAX_PWM (1 << (PWM_RESOLUTION)) - 1
-#define DIVIDER_SOL_BAT 21.1141
-#define DIVIDER_SYS_BAT 11.0327
+#define DIVIDER_SOL_BAT 21.2151
+#define DIVIDER_SYS_BAT 10.936
 #define SOL_BAT_SHUNT_RESISTANCE 0.0145
 #define HYSTERESIS 0.15
 #define MIN_BAT_VOL 10.5

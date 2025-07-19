@@ -58,20 +58,26 @@ enum LastTimePeriod
   LAST_YEAR = 120 // update frequency in hours
 };
 
+enum GraphType
+{
+  SOLAR_POWER,
+  TEMPERATURE,
+  PRESSURE, 
+  HUMIDITY
+};
+
 struct LastTimeWeather
 {
 private:
   std::vector<Weather> data;
   std::vector<FB_Time> labels;
-
-  uint32_t getUnix(FB_Time time, int16_t utcZone);
 public:
   LastTimeWeather() {}
   LastTimeWeather(std::vector<Weather> &data, LastTimePeriod period, FB_Time time, int16_t utcZone);
 
   String toString();
 
-  String dataToString(byte param);
+  String dataToString(GraphType type);
 
   String labelsToString();
 };

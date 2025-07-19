@@ -17,7 +17,7 @@ static bool isStartWiFi = true;
 bool alreadyAP = false;
 
 LastTimePeriod graphPeriod = LAST_DAY;
-byte graphType = 0;
+GraphType graphType = TEMPERATURE;
 
 static void handlePost(void);
 static void handleGet(void);
@@ -75,11 +75,14 @@ void managementWiFi(void)
       }
     }
 
-    if (!isWiFi && !alreadyAP)
+    if (!isWiFi)
     {
-      alreadyAP = true;
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(wifiValuesNow.apSsid, wifiValuesNow.apPassword);
+      if (!alreadyAP)
+      {
+        alreadyAP = true;
+        WiFi.mode(WIFI_AP);
+        WiFi.softAP(wifiValuesNow.apSsid, wifiValuesNow.apPassword);
+      }
     }
     else
     {
@@ -90,10 +93,16 @@ void managementWiFi(void)
 
 String sendHTML(void)
 {
-  String ptr = "<!DOCTYPE html>\n";
+
+  String ptr
+
+  //<!--BEGIN-->
+
+  ptr += "<!DOCTYPE html>\n";
   ptr += "<html>\n";
   ptr += "<head>\n";
   ptr += "<meta name = \"viewport\" width = device-width, initial-scale = 1.0, user-scalable = yes/>\n";
+  ptr += "<meta charset=\"UTF-8\">\n";
   ptr += "<title> SolarStationControl</title>\n";
   ptr += "<style> html\n";
   ptr += "{\n";
@@ -101,7 +110,7 @@ String sendHTML(void)
   ptr += "font-family: Helvetica;\n";
   ptr += "color:\n";
   ptr += "aliceblue;\n";
-  ptr += "background-color: #010216;\n";
+  ptr += "background-color: #151618;\n";
   ptr += "}\n";
   ptr += "h1\n";
   ptr += "{\n";
@@ -123,12 +132,14 @@ String sendHTML(void)
   ptr += "{\n";
   ptr += "background-color: #FF7C00;\n";
   ptr += "font-size: medium;\n";
+  ptr += "color:rgb(12, 12, 12);\n";
   ptr += "}\n";
   ptr += ".formButton\n";
   ptr += "{\n";
   ptr += "background-color: #186F05;\n";
   ptr += "font-size: medium;\n";
   ptr += "border-radius: 15px;\n";
+  ptr += "color: rgb(212, 212, 212);\n";
   ptr += "}\n";
   ptr += ".container\n";
   ptr += "{\n";
@@ -165,6 +176,9 @@ String sendHTML(void)
   ptr += "<h1>SolarStationControl</h1>\n";
   ptr += "<div class=\"container\">\n";
   ptr += "<div class=\"box\">\n";
+
+  //<!--VOLTAGES, WEATHER AND CONTROL-->
+
 #ifndef DEBUG_SENSORS
   ptr += "<h2>Weather now</h2>\n";
   if (isСonnectedSensors)
@@ -195,6 +209,11 @@ String sendHTML(void)
   ptr += "<h2>Control</h2>\n";
   !digitalRead(OUT_SWITCH_PIN) ? ptr += "<button onclick=\"window.location.href='/outOff'\">outOff</button>\n" : ptr += "<button onclick=\"window.location.href='/outOn'\">outOn</button>\n";
   ptr += "<button onclick=\"window.location.href = \'/reset\'\">reset</button>\n";
+
+  //<!--VOLTAGES, WEATHER AND CONTROL-->
+
+  //<!--SETTINGS-->
+
   ptr += "<h2>Settings</h2>\n";
   ptr += "<form method=\"POST\" action=\"/post\">\n";
   ptr += "<h3>WiFi connection</h3>\n";
@@ -213,12 +232,19 @@ String sendHTML(void)
   ptr += "</p>\n";
   ptr += "<input class=\"formButton\" type=\"submit\" value=\"send and reconect\">\n";
   ptr += "</form>\n";
+
+  //<!--SETTINGS-->
+
   ptr += "</div>\n";
+
+  //<!--FORM-->
+
   ptr += "<div class=\"box\" id=\"graphContainer\">\n";
   ptr += "<h2>Weather graph</h2>\n";
   ptr += "<form action=\"/graph\" method=\"GET\">\n";
   ptr += "<label for=\"choiceGraphPeriod\">Chose graph period: </label>\n";
   ptr += "<select id=\"choiceGraphPeriod\" name=\"choiceGraphPeriod\" onchange=\"this.form.submit()\">\n";
+
   if (graphPeriod == LAST_DAY)
   {
     ptr += "<option value=\"lastDay\" selected>lastDay</option>\n";
@@ -254,12 +280,14 @@ String sendHTML(void)
   {
     ptr += "<option value=\"lastYear\">lastYear</option>\n";
   }
+
   ptr += "</select>\n";
   ptr += "</form>\n";
   ptr += "<form action=\"/graph\" method=\"GET\">\n";
   ptr += "<label for=\"choiceGraphType\">Chose graph type: </label>\n";
   ptr += "<select id=\"choiceGraphType\" name=\"choiceGraphType\" onchange=\"this.form.submit()\">\n";
-  if (graphType == 0)
+
+  if (graphType == SOLAR_POWER)
   {
     ptr += "<option value=\"solPower\" selected >Solar power</option>\n";
   }
@@ -268,7 +296,7 @@ String sendHTML(void)
     ptr += "<option value=\"solPower\">Solar power</option>\n";
   }
 
-  if (graphType == 1)
+  if (graphType == TEMPERATURE)
   {
     ptr += "<option value=\"temperature\" selected >Temperature</option>\n";
   }
@@ -277,7 +305,7 @@ String sendHTML(void)
     ptr += "<option value=\"temperature\">Temperature</option>\n";
   }
 
-  if (graphType == 2)
+  if (graphType == PRESSURE)
   {
     ptr += "<option value=\"pressure\" selected >Preassure</option>\n";
   }
@@ -286,7 +314,7 @@ String sendHTML(void)
     ptr += "<option value=\"pressure\">Preassure</option>\n";
   }
 
-  if (graphType == 3)
+  if (graphType == HUMIDITY)
   {
     ptr += "<option value=\"humidity\" selected >Humidity</option>\n";
   }
@@ -294,8 +322,12 @@ String sendHTML(void)
   {
     ptr += "<option value=\"humidity\">Humidity</option>\n";
   }
+
   ptr += "</select>\n";
   ptr += "</form>\n";
+
+  //<!--FORM-->
+
   ptr += "<canvas id=\"graph\"></canvas>\n";
   ptr += "<script>\n";
   ptr += "function toggleWifiPassword() {\n";
@@ -321,19 +353,31 @@ String sendHTML(void)
   ptr += "}\n";
   ptr += "}\n";
   ptr += "function printGraph(width, height) {\n";
-  ptr += "const data = [\n";
 
+  //<!--DATA-->
+
+  ptr += "const data = [\n";
+  LastTimeWeather temp = getLastTimeData(graphPeriod);
+  ptr += temp.dataToString(graphType) + "\n";
   ptr += "];\n";
+
+  ptr += "const labels = [\n";
+  ptr += temp.labelsToString() + "\n";
+  ptr += "];\n";
+
+  //<!--DATA-->
+
   ptr += "const retreatForLabels = 40;\n";
   ptr += "const horizontalColomsNum = 10;\n";
   ptr += "const colomsNumToChangeLabel = 4;\n";
+  ptr += "const canvas = document.getElementById(\"graph\");\n";
+  ptr += "const ctx = canvas.getContext(\"2d\");\n";
+  ptr += "if(data.length > 0){\n";
   ptr += "let dataMax = Math.max(...data);\n";
   ptr += "let dataMin = Math.min(...data);\n";
   ptr += "let sum = data.reduce((a, b) => a + b, 0);\n";
   ptr += "let dataAverange = sum/data.length;\n";
   ptr += "let difference = dataMax-dataMin;\n";
-  ptr += "const canvas = document.getElementById(\"graph\");\n";
-  ptr += "const ctx = canvas.getContext(\"2d\");\n";
   ptr += "canvas.width = width;\n";
   ptr += "canvas.height = height;\n";
   ptr += "width -= retreatForLabels;\n";
@@ -360,9 +404,14 @@ String sendHTML(void)
   ptr += "} else {\n";
   ptr += "ctx.lineTo(pointX, canvas.height-retreatForLabels);\n";
   ptr += "}\n";
+  ptr += "}\n";
   ptr += "ctx.stroke();\n";
   ptr += "ctx.beginPath();\n";
   ptr += "ctx.moveTo(pointX, pointY);\n";
+  ptr += "}else{\n";
+  ptr += "ctx.font = \"60px roboto\";\n";
+  ptr += "ctx.fillText(\"No data\", 5, 65);\n";
+  ptr += "ctx.stroke();\n";
   ptr += "}\n";
   ptr += "for (let j = 0; j < horizontalColomsNum + 1; j++) {\n";
   ptr += "labelY = j * (height/horizontalColomsNum);\n";
@@ -384,6 +433,9 @@ String sendHTML(void)
   ptr += "</div>\n";
   ptr += "</body>\n";
   ptr += "</html>\n";
+
+  //<!--END-->
+
   return ptr;
 }
 
@@ -464,19 +516,19 @@ static void handleGet(void)
     String graphTypeParam = server.arg("choiceGraphType");
     if (graphTypeParam == "solPower")
     {
-      graphType = 0;
+      graphType = SOLAR_POWER;
     }
     else if (graphTypeParam == "temperature")
     {
-      graphType = 1;
+      graphType = TEMPERATURE;
     }
     else if (graphTypeParam == "pressure")
     {
-      graphType = 2;
+      graphType = PRESSURE;
     }
     else if (graphTypeParam == "humidity")
     {
-      graphType = 3;
+      graphType = HUMIDITY;
     }
   }
   server.send(200, "text/html", sendHTML());
